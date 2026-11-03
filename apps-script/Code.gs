@@ -24,9 +24,9 @@ function setup() {
     s = ss.insertSheet(SH_S);
     s.getRange('A1:A3').setValues([['填寫密碼（PIN）'], ['管理金鑰（評價專員用，勿外流）'], ['說明']]);
     s.getRange('B1:B3').setNumberFormat('@').setValues([
-      [String(1000 + Math.floor(Math.random() * 9000))],
+      [''],
       [Utilities.getUuid()],
-      ['PIN 可以直接改，存檔後網頁立即生效；B1 清空＝不用密碼']
+      ['B1 空白＝不用密碼；要加密碼就在 B1 填數字，存檔後網頁立即生效']
     ]);
     s.setColumnWidth(1, 260); s.setColumnWidth(2, 340);
   }
@@ -110,6 +110,17 @@ function doPost(e) {
       const items = Array.isArray(b.items) ? b.items : [];
       items.forEach(it => { if (it && it.id) upsert_(SH_C, it); });
       return out_({ ok: true, n: items.length });
+    }
+    if (b.action === 'delete_complaints') {
+      if (!c.key || b.key !== c.key) return out_({ ok: false, error: 'bad_key' });
+      const ids = new Set((Array.isArray(b.ids) ? b.ids : []).map(String));
+      const s = sheet_(SH_C);
+      const v = s.getDataRange().getDisplayValues();
+      let n = 0;
+      for (let i = v.length - 1; i >= 1; i--) {
+        if (ids.has(v[i][0])) { s.deleteRow(i + 1); n++; }
+      }
+      return out_({ ok: true, n: n });
     }
     if (b.action === 'check_pin') {
       return out_({ ok: !c.pin || String(b.pin || '').trim() === c.pin });
