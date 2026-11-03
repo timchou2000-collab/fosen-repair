@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>丰森負評追房表</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Chivo+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a work-order board — summary strip, filter chips, one ticket per room; result form at the ticket's foot */
+:root{
+  --bg:#f3f4f1; --paper:#ffffff; --ink:#1d2421; --muted:#5f6a64; --line:#d9ddd8;
+  --accent:#2f6b57; --accent-soft:#e2eee8;
+  --hi:#b4412f; --hi-soft:#f7e3de; --mid:#a8741a; --mid-soft:#f6ecd6; --lo:#5f6a64; --lo-soft:#e9ebe8;
+  --done:#2f6b57;
+  --f-body:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-num:"Chivo Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --paper:#1c2320; --ink:#e7ece9; --muted:#9aa6a0; --line:#2e3833;
+  --accent:#7cc3a6; --accent-soft:#1f3a30;
+  --hi:#f08a76; --hi-soft:#3d2420; --mid:#e2b25c; --mid-soft:#3a3020; --lo:#9aa6a0; --lo-soft:#262e2a;
+  --done:#7cc3a6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --paper:#1c2320; --ink:#e7ece9; --muted:#9aa6a0; --line:#2e3833;
+  --accent:#7cc3a6; --accent-soft:#1f3a30;
+  --hi:#f08a76; --hi-soft:#3d2420; --mid:#e2b25c; --mid-soft:#3a3020; --lo:#9aa6a0; --lo-soft:#262e2a;
+  --done:#7cc3a6; color-scheme:dark}
+html{-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1{font-size:1.6rem;margin:0;text-wrap:balance;letter-spacing:.02em}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.9rem}
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.stat b{display:block;font-family:var(--f-num);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.8rem;letter-spacing:.06em}
+.stat.hi b{color:var(--hi)} .stat.done b{color:var(--done)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:5px 14px;font:inherit;font-size:.88rem;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{margin-left:auto;min-width:0;flex:0 1 200px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:6px 10px;font:inherit;font-size:.9rem}
+.list{display:flex;flex-direction:column;gap:12px}
+.ticket{background:var(--paper);border:1px solid var(--line);border-left:6px solid var(--lo);border-radius:6px;display:grid;grid-template-columns:120px minmax(0,1fr);overflow:hidden}
+.ticket.p-高{border-left-color:var(--hi)} .ticket.p-中{border-left-color:var(--mid)}
+.ticket.is-done{opacity:.72;border-left-color:var(--done)}
+.room{padding:14px;border-right:1px dashed var(--line);display:flex;flex-direction:column;gap:4px}
+.room .no{font-family:var(--f-num);font-weight:700;font-size:1.5rem;line-height:1.15;word-break:break-word}
+.room .rt{color:var(--muted);font-size:.8rem}
+.pill{display:inline-block;font-size:.75rem;padding:1px 8px;border-radius:999px;letter-spacing:.04em;width:max-content}
+.pill.高{background:var(--hi-soft);color:var(--hi)} .pill.中{background:var(--mid-soft);color:var(--mid)} .pill.低{background:var(--lo-soft);color:var(--lo)}
+.body{padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.head{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.cat{font-size:.78rem;color:var(--accent);background:var(--accent-soft);padding:1px 8px;border-radius:4px}
+.complaint{font-weight:500}
+.action{font-size:.9rem;background:var(--bg);border-radius:4px;padding:6px 10px}
+.action::before{content:"建議處理：";color:var(--muted)}
+.src{color:var(--muted);font-size:.8rem;font-variant-numeric:tabular-nums;display:flex;flex-direction:column}
+.res{border-top:1px solid var(--line);padding-top:10px;display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;align-items:start}
+.res select,.res textarea{font:inherit;font-size:.9rem;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);padding:6px 8px;min-width:0}
+.res textarea{resize:vertical;min-height:56px}
+.save{font:inherit;font-size:.9rem;background:var(--accent);color:var(--paper);border:0;border-radius:6px;padding:7px 16px;cursor:pointer}
+.save:disabled{opacity:.5;cursor:default}
+.meta{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.meta.err{color:var(--hi)}
+.who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.who label{font-size:.85rem;color:var(--muted)}
+.who input{font:inherit;font-size:.9rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);padding:5px 8px;width:110px}
+.who .ok{font-size:.8rem;color:var(--done)}
+.who .bad{font-size:.8rem;color:var(--hi)}
+.refresh{margin-left:auto;font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:5px 12px;cursor:pointer}
+.note{background:var(--paper);border:1px dashed var(--line);border-radius:8px;padding:28px;text-align:center;color:var(--muted)}
+@media (max-width:640px){
+  .strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ticket{grid-template-columns:minmax(0,1fr)}
+  .room{border-right:0;border-bottom:1px dashed var(--line);flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+  .res{grid-template-columns:minmax(0,1fr)}
+  .search{margin-left:0;flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>丰森負評追房表</h1>
+    <p class="sub">評價專員從 Agoda、Booking、Trip 負評整理。房務主管在每張單下方選狀態、寫處理結果，按「儲存」。</p>
+  </header>
+
+  <section class="who" aria-label="填寫人">
+    <label for="me">你的名字</label><input id="me" autocomplete="name" placeholder="例：王主管">
+    <label for="pin" id="pin-l">填寫密碼</label><input id="pin" inputmode="numeric" autocomplete="off" placeholder="4 位數">
+    <span id="pin-msg"></span>
+    <button class="refresh" id="reload">重新整理</button>
+  </section>
+
+  <section class="strip" aria-label="摘要">
+    <div class="stat"><b id="s-all">–</b><span>全部待辦</span></div>
+    <div class="stat hi"><b id="s-hi">–</b><span>高優先未完成</span></div>
+    <div class="stat"><b id="s-open">–</b><span>尚未處理</span></div>
+    <div class="stat done"><b id="s-done">–</b><span>已完成</span></div>
+  </section>
+
+  <div class="bar" role="toolbar" aria-label="篩選">
+    <button class="chip" data-f="open" aria-pressed="true" id="f-open">未完成</button>
+    <button class="chip" data-f="hi" aria-pressed="false" id="f-hi">高優先</button>
+    <button class="chip" data-f="done" aria-pressed="false" id="f-done">已完成</button>
+    <button class="chip" data-f="all" aria-pressed="false" id="f-all">全部</button>
+    <input class="search" id="q" type="search" placeholder="搜尋房號或問題（例：床、512）" aria-label="搜尋房號或問題">
+  </div>
+
+  <main class="list" id="list">
+    <div class="note">正在讀取負評清單…</div>
+  </main>
+</div>
+<script src="config.js"></script>
+<script>
+(function(){
+  const API=(window.FOSEN_CONFIG&&window.FOSEN_CONFIG.api)||"";
+  const ORDER={"高":0,"中":1,"低":2};
+  const STATUS=["未處理","處理中","已完成","無法處理"];
+  let items=[],results={},filter="open",query="",needPin=true;
+  const drafts={};
+  const $=s=>document.querySelector(s);
+  const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+  const ls={get(k){try{return localStorage.getItem(k)||""}catch(e){return""}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  $("#me").value=ls.get("fosen-me");$("#pin").value=ls.get("fosen-pin");
+  filter=ls.get("fosen-filter")||"open";
+  $("#me").addEventListener("change",e=>ls.set("fosen-me",e.target.value.trim()));
+  $("#pin").addEventListener("change",e=>{ls.set("fosen-pin",e.target.value.trim());checkPin();});
+  $("#reload").addEventListener("click",load);
+
+  function setChips(){document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===filter)));}
+  setChips();
+  document.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.f;setChips();ls.set("fosen-filter",filter);render();}));
+  $("#q").addEventListener("input",e=>{query=e.target.value.trim();render();});
+
+  const st=id=>(results[id]&&results[id].status)||"未處理";
+  const closed=s=>s==="已完成"||s==="無法處理";
+  function fmtTime(iso){if(!iso)return"";const d=new Date(iso);if(isNaN(d))return"";return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+
+  async function post(body){
+    const r=await fetch(API,{method:"POST",body:JSON.stringify(body)});
+    return r.json();
+  }
+  async function checkPin(){
+    const m=$("#pin-msg");
+    if(!needPin){m.textContent="";return;}
+    const p=$("#pin").value.trim();
+    if(!p){m.className="bad";m.textContent="請輸入密碼才能儲存";return;}
+    try{const j=await post({action:"check_pin",pin:p});m.className=j.ok?"ok":"bad";m.textContent=j.ok?"密碼正確":"密碼不對";}catch(e){m.textContent="";}
+  }
+
+  function render(){
+    const list=$("#list");
+    $("#s-all").textContent=items.length;
+    $("#s-hi").textContent=items.filter(i=>i.priority==="高"&&!closed(st(i.id))).length;
+    $("#s-open").textContent=items.filter(i=>st(i.id)==="未處理").length;
+    $("#s-done").textContent=items.filter(i=>closed(st(i.id))).length;
+    let rows=items.slice();
+    if(filter==="open")rows=rows.filter(i=>!closed(st(i.id)));
+    if(filter==="hi")rows=rows.filter(i=>i.priority==="高");
+    if(filter==="done")rows=rows.filter(i=>closed(st(i.id)));
+    if(query){const q=query.toLowerCase();rows=rows.filter(i=>[i.room,i.complaint,i.category,i.action,i.roomType].join(" ").toLowerCase().includes(q));}
+    rows.sort((a,b)=>(ORDER[a.priority]??3)-(ORDER[b.priority]??3)||String(b.latest||"").localeCompare(String(a.latest||"")));
+    if(!items.length){list.innerHTML='<div class="note">目前沒有負評待辦。評價專員每天巡查後會把新的負評加進來。</div>';return;}
+    if(!rows.length){list.innerHTML='<div class="note">這個篩選條件下沒有項目。</div>';return;}
+    list.innerHTML=rows.map(i=>{
+      const r=results[i.id]||{};const s=st(i.id);const dr=drafts[i.id]||{};
+      const curS=dr.status??s,curN=dr.note??(r.note||"");
+      const meta=r.at?`${esc(r.by||"房務")} ${fmtTime(r.at)} 更新為「${esc(s)}」`:"尚未填寫";
+      const src=String(i.sources||"").split("\n").filter(Boolean);
+      return `<article class="ticket p-${esc(i.priority)} ${closed(s)?"is-done":""}" data-id="${esc(i.id)}">
+        <div class="room"><span class="no">${esc(i.room)}</span><span class="rt">${esc(i.listing||"")}${i.roomType?" · "+esc(i.roomType):""}</span><span class="pill ${esc(i.priority)}">${esc(i.priority)}優先</span></div>
+        <div class="body">
+          <div class="head"><span class="cat">${esc(i.category)}</span><span class="complaint">${esc(i.complaint)}</span></div>
+          <div class="action">${esc(i.action)}</div>
+          <div class="src">${src.map(x=>`<span>${esc(x)}</span>`).join("")}</div>
+          <div class="res">
+            <select id="st-${esc(i.id)}" aria-label="${esc(i.room)} 處理狀態">${STATUS.map(o=>`<option ${o===curS?"selected":""}>${o}</option>`).join("")}</select>
+            <textarea id="nt-${esc(i.id)}" rows="2" placeholder="處理結果（例：已鎖緊床架螺絲、床墊 11/5 更換）" aria-label="${esc(i.room)} 處理結果">${esc(curN)}</textarea>
+            <button class="save">儲存</button>
+            <div class="meta">${meta}</div>
+          </div>
+        </div></article>`;}).join("");
+  }
+
+  document.addEventListener("input",e=>{const t=e.target.closest(".ticket");if(!t)return;const id=t.dataset.id;drafts[id]=drafts[id]||{};if(e.target.tagName==="SELECT")drafts[id].status=e.target.value;if(e.target.tagName==="TEXTAREA")drafts[id].note=e.target.value;});
+  document.addEventListener("change",e=>{const t=e.target.closest(".ticket");if(!t||e.target.tagName!=="SELECT")return;drafts[t.dataset.id]=drafts[t.dataset.id]||{};drafts[t.dataset.id].status=e.target.value;});
+  document.addEventListener("click",async e=>{
+    const b=e.target.closest(".save");if(!b)return;
+    const t=b.closest(".ticket"),id=t.dataset.id,meta=t.querySelector(".meta");
+    const by=$("#me").value.trim(),pin=$("#pin").value.trim();
+    meta.classList.remove("err");
+    if(!by){meta.classList.add("err");meta.textContent="請先在最上面填你的名字。";$("#me").focus();return;}
+    if(needPin&&!pin){meta.classList.add("err");meta.textContent="請先在最上面輸入填寫密碼。";$("#pin").focus();return;}
+    ls.set("fosen-me",by);ls.set("fosen-pin",pin);
+    const status=t.querySelector("select").value,note=t.querySelector("textarea").value.trim();
+    b.disabled=true;meta.textContent="儲存中…";
+    try{
+      const j=await post({action:"result",id,status,note,by,pin});
+      if(!j.ok){b.disabled=false;meta.classList.add("err");meta.textContent=j.error==="bad_pin"?"填寫密碼不對，請向老闆確認。":"儲存失敗，請重新整理後再試。";return;}
+      delete drafts[id];
+      results[id]={id,status,note,by,at:new Date().toISOString()};
+      render();
+    }catch(err){b.disabled=false;meta.classList.add("err");meta.textContent="網路連不上，請稍後再按一次儲存。";}
+  });
+
+  async function load(){
+    if(!API){$("#list").innerHTML='<div class="note">網頁還沒設定資料來源（config.js）。</div>';return;}
+    try{
+      const r=await fetch(API);const j=await r.json();
+      items=j.complaints||[];results={};(j.results||[]).forEach(x=>{results[x.id]=x;});
+      needPin=!!j.needPin;$("#pin").hidden=!needPin;$("#pin-l").hidden=!needPin;
+      render();checkPin();
+    }catch(e){$("#list").innerHTML='<div class="note">讀取失敗，請按「重新整理」再試一次。</div>';}
+  }
+  load();
+})();
+</script>
+</body>
+</html>
