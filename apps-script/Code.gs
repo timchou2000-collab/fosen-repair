@@ -122,6 +122,17 @@ function doPost(e) {
       }
       return out_({ ok: true, n: n });
     }
+    if (b.action === 'delete_results') {
+      if (!c.key || b.key !== c.key) return out_({ ok: false, error: 'bad_key' });
+      const ids = new Set((Array.isArray(b.ids) ? b.ids : []).map(String));
+      const s = sheet_(SH_R);
+      const v = s.getDataRange().getDisplayValues();
+      let n = 0;
+      for (let i = v.length - 1; i >= 1; i--) {
+        if (ids.has(v[i][0])) { s.deleteRow(i + 1); n++; }
+      }
+      return out_({ ok: true, n: n });
+    }
     if (b.action === 'check_pin') {
       return out_({ ok: !c.pin || String(b.pin || '').trim() === c.pin });
     }
