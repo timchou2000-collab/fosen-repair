@@ -14,6 +14,8 @@ const SH_S = '設定';
 const HEAD_C = ['id', 'priority', 'room', 'listing', 'roomType', 'category', 'complaint', 'action', 'sources', 'latest', 'added'];
 const HEAD_R = ['id', 'status', 'note', 'by', 'at'];
 const STATUS = ['未處理', '處理中', '已完成', '無法處理'];
+const SH_A = 'archive';  // 從網頁移出的單（封存）
+const HEAD_A = ['removed_at', 'removed_by'].concat(HEAD_C, ['status', 'note', 'by', 'at']);
 
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -132,6 +134,23 @@ function doPost(e) {
         if (ids.has(v[i][0])) { s.deleteRow(i + 1); n++; }
       }
       return out_({ ok: true, n: n });
+    }
+    if (b.action === 'remove_done') {
+      // 網頁「移出」按鈕：不用密碼，但只有狀態「已完成」的單能移出；先封存到 archive 分頁再刪
+      const id = String(b.id || '');
+      const r = rows_(SH_R).find(x => x.id === id);
+      if (!r || r.status !== '已完成') return out_({ ok: false, error: 'not_done' });
+      const cs = sheet_(SH_C), cv = cs.getDataRange().getDisplayValues();
+      const ci = cv.findIndex((x, ix) => ix > 0 && x[0] === id);
+      if (ci < 0) return out_({ ok: false, error: 'no_such_item' });
+      const c = {};
+      cv[0].forEach((k, i) => { c[k] = cv[ci][i]; });
+      const arc = ensure_(SpreadsheetApp.getActiveSpreadsheet(), SH_A, HEAD_A);
+      arc.appendRow(HEAD_A.map(k => safe_(k === 'removed_at' ? new Date().toISOString() : k === 'removed_by' ? String(b.by || '').slice(0, 40) : (k in c ? c[k] : r[k]))));
+      cs.deleteRow(ci + 1);
+      const rs = sheet_(SH_R), rv = rs.getDataRange().getDisplayValues();
+      for (let i = rv.length - 1; i >= 1; i--) if (rv[i][0] === id) rs.deleteRow(i + 1);
+      return out_({ ok: true });
     }
     if (b.action === 'check_pin') {
       return out_({ ok: !c.pin || String(b.pin || '').trim() === c.pin });

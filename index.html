@@ -70,6 +70,9 @@ h1{font-size:1.6rem;margin:0;text-wrap:balance;letter-spacing:.02em}
 .save:disabled{opacity:.5;cursor:default}
 .meta{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
 .meta.err{color:var(--hi)}
+.remove{font:inherit;font-size:.8rem;margin-left:10px;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:6px;padding:2px 10px;cursor:pointer}
+.remove:hover{color:var(--hi);border-color:var(--hi)}
+.remove:disabled{opacity:.5;cursor:default}
 .who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
 .who label{font-size:.85rem;color:var(--muted)}
 .who input{font:inherit;font-size:.9rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);padding:5px 8px;width:110px}
@@ -208,13 +211,26 @@ h1{font-size:1.6rem;margin:0;text-wrap:balance;letter-spacing:.02em}
             <select id="st-${esc(i.id)}" aria-label="${esc(i.room)} 處理狀態">${STATUS.map(o=>`<option ${o===curS?"selected":""}>${o}</option>`).join("")}</select>
             <textarea id="nt-${esc(i.id)}" rows="2" placeholder="處理結果（例：已鎖緊床架螺絲、床墊 11/5 更換）" aria-label="${esc(i.room)} 處理結果">${esc(curN)}</textarea>
             <button class="save">儲存</button>
-            <div class="meta">${meta}</div>
+            <div class="meta">${meta}${r.status==="已完成"?` <button class="remove" type="button">移出追房表</button>`:""}</div>
           </div>
         </div></article>`;}).join("");
   }
 
   document.addEventListener("input",e=>{const t=e.target.closest(".ticket");if(!t)return;const id=t.dataset.id;drafts[id]=drafts[id]||{};if(e.target.tagName==="SELECT")drafts[id].status=e.target.value;if(e.target.tagName==="TEXTAREA")drafts[id].note=e.target.value;});
   document.addEventListener("change",e=>{const t=e.target.closest(".ticket");if(!t||e.target.tagName!=="SELECT")return;drafts[t.dataset.id]=drafts[t.dataset.id]||{};drafts[t.dataset.id].status=e.target.value;});
+  document.addEventListener("click",async e=>{
+    const b=e.target.closest(".remove");if(!b)return;
+    const t=b.closest(".ticket"),id=t.dataset.id,meta=t.querySelector(".meta");
+    const item=items.find(x=>x.id===id)||{};
+    if(!window.confirm(`把 ${item.room||id} 移出追房表？（只有已完成的單能移出）`))return;
+    b.disabled=true;
+    try{
+      const j=await post({action:"remove_done",id,by:$("#me").value.trim()});
+      if(!j.ok){b.disabled=false;meta.classList.add("err");
+        meta.textContent=j.error==="not_done"?"這張單還不是「已完成」，不能移出（先選已完成並按儲存）。":j.error==="bad_action"?"後台還沒更新，暫時不能移出，請跟老闆說。":"移出失敗，請重新整理後再試。";return;}
+      items=items.filter(x=>x.id!==id);delete results[id];render();
+    }catch(err){b.disabled=false;meta.classList.add("err");meta.textContent="網路連不上，請稍後再試。";}
+  });
   document.addEventListener("click",async e=>{
     const b=e.target.closest(".save");if(!b)return;
     const t=b.closest(".ticket"),id=t.dataset.id,meta=t.querySelector(".meta");
